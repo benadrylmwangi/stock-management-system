@@ -1,0 +1,20 @@
+{% extends "main/base.html" %}
+{% load static %}
+{% block title %}
+login page
+{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'main/css/register.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>Login</h1>
+    <form method="POST">
+        {% csrf_token %}
+        Email:<input type="email" name="email" placeholder="you@example.com" required>
+        Password:<input type="password" name="password" required>
+        <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="{% url 'register' %}">Register</a></p>
+</div>
+{% endblock %}

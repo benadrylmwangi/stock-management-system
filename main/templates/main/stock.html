@@ -1,0 +1,46 @@
+{% extends "main/base.html" %}
+{% block title %}Stock Page{% endblock %}
+
+{%block content%}
+
+{%load static%}
+
+
+<form method="POST" id="commodityForm">
+    <!-- Django CSRF (remove if not using Django) -->
+    {% csrf_token %}
+
+    <div>
+        <label for="commodity_name">Commodity Name</label><br>
+        <input type="text" id="commodity_name" name="commodity_name" required>
+    </div>
+
+    <div>
+        <label for="quantity">Number of Commodity</label><br>
+        <input type="number" id="quantity" name="quantity" min="1" required>
+    </div>
+
+    <div>
+        <label for="buying_price">Buying Price</label><br>
+        <input type="number" id="buying_price" name="buying_price" step="0.01" required>
+    </div>
+
+    <div>
+        <label for="selling_price">Selling Price</label><br>
+        <input type="number" id="selling_price" name="selling_price" step="0.01" required>
+    </div>
+
+    <div>
+        <label for="amount">Amount (Buying × Quantity)</label><br>
+        <input type="number" id="amount" name="amount" step="0.01" readonly>
+    </div>
+
+    <div>
+        <label for="total_amount">Total Amount (Selling × Quantity)</label><br>
+        <input type="number" id="total_amount" name="total_amount" step="0.01" readonly>
+    </div>
+
+    <button type="submit">Add</button>
+</form>
+<script src="{% static 'main/js/commodity.js' %}"></script>
+{% endblock %}

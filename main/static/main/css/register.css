@@ -1,0 +1,111 @@
+/* Reset & base */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f4f6f8;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+}
+
+/* Page container */
+.container {
+    max-width: 480px;
+    margin: 80px auto;
+    padding: 32px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Heading */
+.container h1 {
+    text-align: center;
+    margin-bottom: 28px;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #222;
+}
+
+/* Form layout */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Labels (your inline text before inputs) */
+form label,
+form p {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+/* Inputs */
+form input[type="text"],
+form input[type="email"],
+form input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    border: 1px solid #d0d7de;
+    background-color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Input focus */
+form input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Django form errors */
+.errorlist {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: #dc2626;
+    font-size: 0.85rem;
+}
+
+/* Submit button */
+form button {
+    margin-top: 12px;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #ffffff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Button hover */
+form button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+}
+
+/* Button active */
+form button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 576px) {
+    .container {
+        margin: 40px 16px;
+        padding: 24px;
+    }
+
+    .container h1 {
+        font-size: 1.5rem;
+    }
+}

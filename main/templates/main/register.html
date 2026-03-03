@@ -1,0 +1,24 @@
+{% extends "main/base.html" %}
+{% load static %}
+{%block title%}
+
+register page
+{%endblock%}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'main/css/register.css' %}">
+{% endblock %}
+{%block content%}
+<div class="container">
+    <h1>Register</h1>
+    <form method="POST" name="collect">
+        {% csrf_token %}
+        Business Name:<input type="text" name="business_name" placeholder="wa komu enterprises"required>
+        Email:<input type="email" name="email" placeholder="wakomu@gamil.com"required>
+        Phone Number:<input type="text" name="phone_number" placeholder="07 ** *** ***" pattern="07********" required>
+        Password:<input type="password" name="password"required>
+        Confirm Password:<input type="password" name="confirm_password"required>
+        <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+</div>
+{%endblock%}

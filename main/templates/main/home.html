@@ -1,0 +1,11 @@
+{%extends "main/base.html"%}
+{%block title%}home page{%endblock%}
+
+{%block content%}
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="text" name="name" placeholder="name">
+    <button type="submit">Save</button>
+</form>
+{%endblock%}
