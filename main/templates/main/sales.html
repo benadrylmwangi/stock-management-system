@@ -1,0 +1,87 @@
+{% extends 'main/base.html' %}
+
+{% load static %}
+{%block title %}sales page{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'main/css/sale.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container" style="margin-top: 20px;overflow: hidden;">
+    <div class="sale-container">
+
+        <h2>Make a Sale</h2>
+        <p class="hint">Enter a product name or select from stock. You can adjust prices before saving.</p>
+
+    <form method="POST" id="saleForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label>Customer</label>
+            {{ form.customer_name }}
+            {% for error in form.customer_name.errors %}
+                <p class="error-text error-msg">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label>Product</label>
+            {{ form.name }}
+            {% for error in form.name.errors %}
+                <p class="error-text error-msg">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label>Buying Price</label>
+            {{ form.buying_price }}
+            {% for error in form.buying_price.errors %}
+                <p class="error-text error-msg">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label>Quantity</label>
+            {{ form.number_of_commodity }}
+            {% for error in form.number_of_commodity.errors %}
+                <p class="error-text error-msg">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label>Selling Price</label>
+            {{ form.selling_price }}
+            {% for error in form.selling_price.errors %}
+                <p class="error-text error-msg">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        {{ form.amount }}
+
+    
+        <div class="form-group">
+            <label>Payment Type</label>
+            {{ form.payment_type }}
+            {% for error in form.payment_type.errors %}
+                <p class="error-text error-msg">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="total-display total">
+            Total: Ksh <span id="total">{{ form.amount.value|default:"0.00" }}</span>
+        </div>
+
+        <button type="submit" class="btn">Save Sale</button>
+    </form>
+</div>
+</div>
+
+<script src="{% static 'main/js/sales.js' %}"></script>
+{% endblock %}

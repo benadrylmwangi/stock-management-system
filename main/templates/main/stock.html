@@ -6,6 +6,9 @@
 {%load static%}
 
 
+<div class="card section"style="margin-top: 20px;overflow: hidden;">
+<h2>Stock Entry</h2>
+<p class="hint">Add or update a product in your stock list.</p>
 <form method="POST" id="commodityForm">
     <!-- Django CSRF (remove if not using Django) -->
     {% csrf_token %}
@@ -26,21 +29,52 @@
     </div>
 
     <div>
-        <label for="selling_price">Selling Price</label><br>
-        <input type="number" id="selling_price" name="selling_price" step="0.01" required>
+        <label for="expected_selling_price">Expected Selling Price</label><br>
+        <input type="number" id="expected_selling_price" name="expected_selling_price" step="0.01" required>
     </div>
 
     <div>
-        <label for="amount">Amount (Buying × Quantity)</label><br>
-        <input type="number" id="amount" name="amount" step="0.01" readonly>
+        <label>Amount (Buying x Quantity)</label><br>
+        <input type="number" id="amount" name="amount" placeholder="0.00" readonly>
     </div>
 
     <div>
-        <label for="total_amount">Total Amount (Selling × Quantity)</label><br>
-        <input type="number" id="total_amount" name="total_amount" step="0.01" readonly>
+        <label>Expected Sales (Selling x Quantity)</label><br>
+        <input type="number" id="expected_sales" name="expected_sales" placeholder="0.00" readonly>
     </div>
-
-    <button type="submit">Add</button>
+    <button type="submit">Save Stock</button>
 </form>
-<script src="{% static 'main/js/commodity.js' %}"></script>
+</div>
+
+<div class="card section">
+<h3>Your Stock</h3>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Commodity</th>
+                <th>Quantity</th>
+                <th>Buying</th>
+                <th>Selling</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in stocks %}
+            <tr>
+                <td>{{ item.name_commodity }}</td>
+                <td>{{ item.number_of_commodity }}</td>
+                <td>{{ item.buying_price }}</td>
+                <td>{{ item.commodity.selling_price }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No stock records yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+<script src="{% static 'main/js/commodity.js' %}?v=20260315" defer></script>
 {% endblock %}
+

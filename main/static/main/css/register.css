@@ -11,12 +11,18 @@ body {
 
 /* Page container */
 .container {
+    margin-top: 2px;
     max-width: 480px;
-    margin: 80px auto;
+    margin: 2px auto;
     padding: 32px;
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    width: 50%;
+    text-align: center;
+    justify-self: center;
+    
+    position: fixed;
 }
 
 /* Heading */
@@ -108,4 +114,19 @@ form button:active {
     .container h1 {
         font-size: 1.5rem;
     }
+}
+
+/* Allauth social continue button: centered and larger */
+.auth-social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: min(100%, 360px);
+    margin: 12px auto 0;
+    min-height: 56px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 700;
 }

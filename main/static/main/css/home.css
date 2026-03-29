@@ -1,0 +1,85 @@
+.home-container {
+
+    text-align: center;
+    padding: 50px;
+    
+    margin: 0 auto;
+    background-attachment: fixed;
+    background-repeat: repeat-x;
+    background-image: url("{% static 'main/images/dashboard-bg.png' %}");
+    background-color: aqua;
+    margin-left: +0px;
+    height: 800px;
+    
+    
+}
+.homeImage {
+    margin-top: 30px;
+    width: 50%;    
+    height: auto;
+   
+}
+.analysis {
+    width: 50%;
+    margin-top: -800px;
+    margin-left: +600px;
+
+    height: 500px;;
+    padding: 20px;
+    background-color: #f2f3b8;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+.image1 {
+    margin-top: 30px;
+    width: 50%;
+    margin-left: 0px;
+}
+.image2 {
+    margin-top: 30px;
+    width: 50%;
+    height: 500px;
+    margin-left: 0px;
+}
+
+.evident {
+    margin-top: 50px;
+    padding: 40px;
+    background-color: #7ddd9d;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    margin-right: -50px;
+}
+.evident1 {
+    margin-top: 50px;
+    padding: 40px;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    margin-left: +200px;
+}
+.evident2 {
+    margin-top: 50px;
+    padding: 40px;
+    background-color: #dd7db2;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    margin-left: +800px;
+    margin-top: -200px;
+    height: 100px;
+    width: 250px;
+    font-size: x-large;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    align-content: center;
+}

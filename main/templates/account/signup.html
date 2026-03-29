@@ -1,0 +1,62 @@
+{% extends "main/base.html" %}
+{% load i18n allauth account socialaccount static %}
+
+{% block title %}Sign Up{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'main/css/register.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <div class="auth-shell">
+        <div class="auth-card">
+            <p class="auth-kicker">Create Your Access</p>
+            <h1>Sign Up</h1>
+            <p class="hint">Create your account in less than a minute.</p>
+
+            <form method="post" action="{% url 'account_signup' %}" class="auth-form">
+                {% csrf_token %}
+                {% for hidden_field in form.hidden_fields %}
+                    {{ hidden_field }}
+                {% endfor %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                {% for field in form.visible_fields %}
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <small class="text-danger">{{ field.errors|striptags }}</small>
+                    {% endif %}
+                {% endfor %}
+
+                {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary auth-primary-btn">{% trans "Sign Up" %}</button>
+            </form>
+
+            {% get_providers as socialaccount_providers %}
+            {% if socialaccount_providers %}
+                <div class="auth-divider"><span>or continue with</span></div>
+                {% for provider in socialaccount_providers %}
+                    <a class="btn btn-outline-dark auth-social-btn" href="{% provider_login_url provider.id process='signup' %}">
+                        {% if provider.id == "google" %}
+                            <i class="fa-brands fa-google"></i>
+                        {% else %}
+                            <i class="fa-solid fa-user-plus"></i>
+                        {% endif %}
+                        Continue with {{ provider.name }}
+                    </a>
+                {% endfor %}
+            {% endif %}
+
+            <p class="auth-meta">Already have an account? <a href="{% url 'login' %}">{% trans "Sign in" %}</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}

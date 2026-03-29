@@ -1,0 +1,145 @@
+:root {
+  --cashbook-border: #1e2a39;
+  --cashbook-accent: #0f5d5a;
+  --cashbook-muted: #f3f6f9;
+  --cashbook-text: #17212b;
+}
+
+.cashbook-page {
+  padding: 28px 0 60px;
+  color: var(--cashbook-text);
+}
+
+.cashbook-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.cashbook-header h1 {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.cashbook-range {
+  margin: 0;
+  color: #4c5a67;
+}
+
+.cashbook-actions {
+  width: 100%;
+  max-width: 420px;
+  min-width: 0;
+  background: var(--cashbook-muted);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #d9e1ea;
+}
+
+.date-inputs {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.date-inputs label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  gap: 6px;
+}
+
+.date-inputs input {
+  padding: 6px 10px;
+  border: 1px solid #c8d3df;
+  border-radius: 8px;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cashbook-error {
+  color: #c0392b;
+  margin-top: 10px;
+  min-height: 20px;
+}
+
+.cashbook-table-wrapper {
+  overflow-x: hidden;
+  border: 1px solid var(--cashbook-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.cashbook-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.cashbook-table th,
+.cashbook-table td {
+  border: 1px solid var(--cashbook-border);
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.cashbook-table thead th {
+  background: #eaeff1;
+  color: #1e2a39 !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.cashbook-headline th {
+  background: var(--cashbook-accent);
+  color: hsl(0, 40%, 98%) !important;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.cashbook-total td {
+  background: #f0f5f7;
+  font-weight: 700;
+}
+
+.cashbook-empty {
+  text-align: center;
+  padding: 20px;
+  color: #637180;
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .navbar,
+  .cashbook-actions,
+  .cashbook-error {
+    display: none !important;
+  }
+
+  .cashbook-page {
+    padding: 0;
+  }
+
+  .cashbook-table-wrapper {
+    border: none;
+  }
+
+  .cashbook-table th,
+  .cashbook-table td {
+    font-size: 0.75rem;
+  }
+}

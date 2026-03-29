@@ -1,0 +1,80 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Cash Book{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'main/css/cashbook.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="cashbook-page container">
+    <div class="cashbook-header">
+        <div>
+            <h1>Cash Book (Triple Column)</h1>
+            <p id="cashbookRange" class="cashbook-range">Select a date range to generate the cash book.</p>
+        </div>
+        <div class="cashbook-actions">
+            <div class="date-inputs">
+                <label>
+                    Start Date
+                    <input type="date" id="cashbookStartDate">
+                </label>
+                <label>
+                    End Date
+                    <input type="date" id="cashbookEndDate">
+                </label>
+            </div>
+            <div class="button-row">
+                <button id="cashbookGenerate" class="btn btn-primary">Generate Report</button>
+                <button id="cashbookPrint" class="btn btn-outline-secondary">Download PDF</button>
+            </div>
+            <p id="cashbookError" class="cashbook-error"></p>
+        </div>
+    </div>
+
+    <div class="cashbook-table-wrapper">
+        <table class="cashbook-table">
+            <thead>
+                <tr class="cashbook-headline">
+                    <th colspan="6">RECEIPTS</th>
+                    <th colspan="6">PAYMENTS</th>
+                </tr>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Ref</th>
+                    <th>Cash</th>
+                    <th>Bank</th>
+                    <th>Disc</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Ref</th>
+                    <th>Cash</th>
+                    <th>Bank</th>
+                    <th>Disc</th>
+                </tr>
+            </thead>
+            <tbody id="cashbookBody">
+                <tr>
+                    <td colspan="12" class="cashbook-empty">No data yet. Choose dates and generate.</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="cashbook-total">
+                    <td colspan="3">Totals</td>
+                    <td id="receiptCashTotal">0.00</td>
+                    <td id="receiptBankTotal">0.00</td>
+                    <td id="receiptDiscTotal">0.00</td>
+                    <td colspan="3">Totals</td>
+                    <td id="paymentCashTotal">0.00</td>
+                    <td id="paymentBankTotal">0.00</td>
+                    <td id="paymentDiscTotal">0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<script src="{% static 'main/js/cashbook.js' %}"></script>
+{% endblock %}

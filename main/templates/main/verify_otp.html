@@ -1,0 +1,48 @@
+{% extends "main/base.html" %}
+{% load static %}
+{% block title %}Verify OTP{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'main/css/register.css' %}">
+{% endblock %}
+{% block content %}
+<section class="auth-page">
+    <div class="auth-shell">
+        <div class="auth-card auth-otp-card">
+            <p class="auth-kicker">Secure Verification</p>
+            <h1>Verify Email</h1>
+            <p class="hint">
+                Enter the 6-digit OTP sent to:
+                <strong>{{ pending_email|default:"your email" }}</strong>
+            </p>
+
+            <form method="POST" novalidate class="auth-form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <small class="text-danger">{{ form.email.errors|striptags }}</small>
+                {% endif %}
+
+                <label for="{{ form.otp_code.id_for_label }}">OTP Code</label>
+                {{ form.otp_code }}
+                {% if form.otp_code.errors %}
+                    <small class="text-danger">{{ form.otp_code.errors|striptags }}</small>
+                {% endif %}
+
+                <div class="auth-action-row">
+                    <button type="submit" name="action" value="verify" class="btn btn-primary auth-primary-btn">Verify OTP</button>
+                    <button type="submit" name="action" value="resend" class="btn auth-secondary-btn">Resend OTP</button>
+                </div>
+            </form>
+
+            <p class="auth-meta"><a href="{% url 'login' %}">Back to login</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}

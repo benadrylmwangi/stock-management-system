@@ -1,0 +1,73 @@
+{% extends "main/base.html" %}
+{% load i18n allauth account socialaccount static %}
+
+{% block title %}Sign In{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'main/css/register.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-page"style="width: 50%;justify-self: center;">
+    <div class="auth-shell">
+        <div class="auth-card">
+            <p class="auth-kicker">Secure Account Access</p>
+            <h1>Sign In</h1>
+            <p class="hint">Use your email and password to continue.</p>
+
+            <form method="post" action="{% url 'account_login' %}" class="auth-form">
+                {% csrf_token %}
+                {% for hidden_field in form.hidden_fields %}
+                    {{ hidden_field }}
+                {% endfor %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                {% for field in form.visible_fields %}
+                    {% if field.name != "remember" %}
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <small class="text-danger">{{ field.errors|striptags }}</small>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if form.remember %}
+                    <div class="auth-check">
+                        {{ form.remember }}
+                        <label for="{{ form.remember.id_for_label }}">{{ form.remember.label }}</label>
+                    </div>
+                {% endif %}
+
+                {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary auth-primary-btn">{% trans "Sign In" %}</button>
+            </form>
+
+            <p class="auth-meta"><a href="{% url 'account_reset_password' %}">{% trans "Forgot your password?" %}</a></p>
+
+            {% get_providers as socialaccount_providers %}
+            {% if socialaccount_providers %}
+                <div class="auth-divider"><span>or continue with</span></div>
+                {% for provider in socialaccount_providers %}
+                    <a class="btn btn-outline-dark auth-social-btn" href="{% provider_login_url provider.id process='login' %}">
+                        {% if provider.id == "google" %}
+                            <i class="fa-brands fa-google"></i>
+                        {% else %}
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                        {% endif %}
+                        Continue with {{ provider.name }}
+                    </a>
+                {% endfor %}
+            {% endif %}
+
+            <p class="auth-meta">Don't have an account? <a href="{% url 'register' %}">{% trans "Sign up" %}</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}

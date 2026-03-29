@@ -1,0 +1,378 @@
+{% extends 'main/base.html' %}
+
+{% load static %}
+{% block title %}credit payment{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'main/css/payment.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/sales.css' %}">
+    <style>
+        .debtor-credit-result {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #fff8d8;
+            color: #2f2f2f;
+            min-height: 44px;
+        }
+        .debtor-credit-result.is-error {
+            background: #ffe3e3;
+            color: #8b1a1a;
+        }
+        .debtor-credit-result.is-warning {
+            background: #fff1ca;
+            color: #735000;
+        }
+        .debtor-credit-result.is-success {
+            background: #e3f6e8;
+            color: #1c6a2f;
+        }
+        .debtor-credit-result.is-cleared {
+            color: #188038;
+            font-weight: 700;
+        }
+        .credit-amount {
+            font-weight: 700;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="sale-container">
+    <h2>Debtor Credit Management</h2>
+    <p class="hint">Request a debtor credit amount, then apply payment.</p>
+
+    <div class="form-group">
+        <label for="debtor-name-input">Debtor Name</label>
+        <input
+            id="debtor-name-input"
+            type="text"
+            class="form-control"
+            placeholder="Enter debtor name"
+            autocomplete="off"
+        />
+    </div>
+
+    <div class="form-group">
+        <button id="request-credit-btn" type="button" class="btn">
+            Request Debtor Credit Amount
+        </button>
+    </div>
+
+    <div id="debtor-credit-result" class="debtor-credit-result" aria-live="polite">
+        Enter a debtor name and click request.
+    </div>
+
+    <div class="form-group">
+        <label for="debt-payment-amount">Payment Amount</label>
+        <input
+            id="debt-payment-amount"
+            type="number"
+            class="form-control"
+            min="0"
+            step="0.01"
+            placeholder="Enter amount to pay"
+        />
+    </div>
+
+    <div class="form-group">
+        <label for="debt-payment-method">Payment Method</label>
+        <select id="debt-payment-method" class="form-control">
+            <option value="cash">Cash</option>
+            <option value="bank">Bank</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="debt-payment-reference">Reference (Optional)</label>
+        <input
+            id="debt-payment-reference"
+            type="text"
+            class="form-control"
+            maxlength="200"
+            placeholder="e.g. Receipt No. 1021"
+        />
+    </div>
+
+    <div class="form-group">
+        <button id="pay-debt-btn" type="button" class="btn">Pay Debt</button>
+    </div>
+</div>
+
+<div class="sale-container">
+    <h2>Returns</h2>
+    <p class="hint">Record returns to keep your profit accurate.</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="return" />
+
+        {% if return_form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in return_form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label>Return Type</label>
+            {{ return_form.return_type }}
+            {% for error in return_form.return_type.errors %}
+                <p class="error-text">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label>Amount</label>
+            {{ return_form.amount }}
+            {% for error in return_form.amount.errors %}
+                <p class="error-text">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label>Note</label>
+            {{ return_form.note }}
+            {% for error in return_form.note.errors %}
+                <p class="error-text">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="btn">Save Return</button>
+    </form>
+</div>
+
+<div class="sale-container">
+    <h2>Expenses</h2>
+    <p class="hint">Track business expenses for reporting.</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="expense" />
+
+        {% if expense_form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in expense_form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label>Description</label>
+            {{ expense_form.description }}
+            {% for error in expense_form.description.errors %}
+                <p class="error-text">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label>Amount</label>
+            {{ expense_form.amount }}
+            {% for error in expense_form.amount.errors %}
+                <p class="error-text">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="btn">Save Expense</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const debtorNameInput = document.getElementById("debtor-name-input");
+        const requestCreditBtn = document.getElementById("request-credit-btn");
+        const payDebtBtn = document.getElementById("pay-debt-btn");
+        const paymentAmountInput = document.getElementById("debt-payment-amount");
+        const paymentMethodInput = document.getElementById("debt-payment-method");
+        const paymentReferenceInput = document.getElementById("debt-payment-reference");
+        const resultEl = document.getElementById("debtor-credit-result");
+
+        let lastQueriedName = "";
+        let lastKnownCredit = null;
+
+        function formatMoney(value) {
+            return Number(value || 0).toFixed(2);
+        }
+
+        function getCookie(name) {
+            const cookieValue = document.cookie
+                .split(";")
+                .map((cookie) => cookie.trim())
+                .find((cookie) => cookie.startsWith(name + "="));
+            if (!cookieValue) return "";
+            return decodeURIComponent(cookieValue.split("=").slice(1).join("="));
+        }
+
+        function setResult(message, type, useHtml, cleared) {
+            resultEl.classList.remove("is-error", "is-warning", "is-success", "is-cleared");
+
+            if (type === "error") resultEl.classList.add("is-error");
+            if (type === "warning") resultEl.classList.add("is-warning");
+            if (type === "success") resultEl.classList.add("is-success");
+            if (cleared) resultEl.classList.add("is-cleared");
+
+            if (useHtml) {
+                resultEl.innerHTML = message;
+                return;
+            }
+            resultEl.textContent = message;
+        }
+
+        async function requestCreditAmount() {
+            const debtorName = debtorNameInput.value.trim();
+            if (!debtorName) {
+                setResult("Please enter debtor name.", "error", false, false);
+                return false;
+            }
+
+            requestCreditBtn.disabled = true;
+            try {
+                const response = await fetch(
+                    `/api/debtor-credit/?name=${encodeURIComponent(debtorName)}`
+                );
+                const data = await response.json();
+
+                lastQueriedName = debtorName;
+
+                if (!response.ok) {
+                    lastKnownCredit = null;
+                    setResult(
+                        data.message || "Unable to fetch debtor credit right now.",
+                        "error",
+                        false,
+                        false
+                    );
+                    return false;
+                }
+
+                if (!data.exists) {
+                    lastKnownCredit = null;
+                    setResult("Customer has no debt", "warning", false, false);
+                    return false;
+                }
+
+                const credit = Number(data.credit || 0);
+                lastKnownCredit = credit;
+
+                if (credit === 0) {
+                    setResult("Credit amount is 0", "warning", false, false);
+                    return true;
+                }
+
+                setResult(
+                    `Credit amount: <span class="credit-amount">${formatMoney(credit)}</span>`,
+                    "",
+                    true,
+                    false
+                );
+                return true;
+            } catch (error) {
+                lastKnownCredit = null;
+                setResult("Network error while requesting debtor credit.", "error", false, false);
+                return false;
+            } finally {
+                requestCreditBtn.disabled = false;
+            }
+        }
+
+        async function payDebt() {
+            const debtorName = debtorNameInput.value.trim();
+            const amountPaid = Number(paymentAmountInput.value);
+            const paymentMethod = (paymentMethodInput.value || "cash").toLowerCase();
+            const paymentReference = (paymentReferenceInput.value || "").trim();
+
+            if (!debtorName) {
+                setResult("Please enter debtor name.", "error", false, false);
+                return;
+            }
+
+            if (!Number.isFinite(amountPaid) || amountPaid <= 0) {
+                setResult("Payment amount must be greater than 0.", "error", false, false);
+                return;
+            }
+
+            const nameChanged = !lastQueriedName || lastQueriedName.toLowerCase() !== debtorName.toLowerCase();
+            if (nameChanged || lastKnownCredit === null) {
+                const exists = await requestCreditAmount();
+                if (!exists) {
+                    return;
+                }
+            }
+
+            if (lastKnownCredit === 0) {
+                setResult("Credit amount is 0", "warning", false, false);
+                return;
+            }
+
+            const csrfToken = getCookie("csrftoken");
+            if (!csrfToken) {
+                setResult("Missing CSRF token. Refresh and try again.", "error", false, false);
+                return;
+            }
+
+            payDebtBtn.disabled = true;
+            try {
+                const response = await fetch("/api/pay-debt/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({
+                        name: debtorName,
+                        amount_paid: amountPaid,
+                        method: paymentMethod,
+                        reference: paymentReference,
+                    }),
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        lastKnownCredit = null;
+                        setResult("Customer has no debt", "warning", false, false);
+                        return;
+                    }
+                    setResult(
+                        data.message || "Unable to apply payment right now.",
+                        "error",
+                        false,
+                        false
+                    );
+                    return;
+                }
+
+                const remainingCredit = Number(data.remaining_credit || 0);
+                lastKnownCredit = remainingCredit;
+                paymentAmountInput.value = "";
+
+                if (data.cleared || remainingCredit <= 0) {
+                    setResult(
+                        "Payment successful. Debt cleared",
+                        "success",
+                        false,
+                        true
+                    );
+                    return;
+                }
+
+                setResult(
+                    `Payment successful. Remaining credit: <span class="credit-amount">${formatMoney(remainingCredit)}</span>`,
+                    "success",
+                    true,
+                    false
+                );
+            } catch (error) {
+                setResult("Network error while applying payment.", "error", false, false);
+            } finally {
+                payDebtBtn.disabled = false;
+            }
+        }
+
+        requestCreditBtn.addEventListener("click", requestCreditAmount);
+        payDebtBtn.addEventListener("click", payDebt);
+    });
+</script>
+{% endblock %}

@@ -1,20 +1,49 @@
 {% extends "main/base.html" %}
 {% load static %}
-{% block title %}
-login page
-{% endblock %}
+{% block title %}Login{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'main/css/register.css' %}">
 {% endblock %}
 {% block content %}
-<div class="container">
-    <h1>Login</h1>
-    <form method="POST">
-        {% csrf_token %}
-        Email:<input type="email" name="email" placeholder="you@example.com" required>
-        Password:<input type="password" name="password" required>
-        <button type="submit">Login</button>
-    </form>
-    <p>Don't have an account? <a href="{% url 'register' %}">Register</a></p>
-</div>
+<section class="auth-page"style="width: 50%;justify-self: center;">
+    <div class="auth-shell">
+        <div class="auth-card">
+            <p class="auth-kicker">LedgerPro Access</p>
+            <h1>Welcome Back</h1>
+            <p class="hint">Login works after email verification.</p>
+
+            <form method="POST" novalidate class="auth-form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <small class="text-danger">{{ form.email.errors|striptags }}</small>
+                {% endif %}
+
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <small class="text-danger">{{ form.password.errors|striptags }}</small>
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary auth-primary-btn">Login</button>
+            </form>
+
+            <div class="auth-divider"><span>or continue with</span></div>
+            <a class="btn btn-outline-dark w-100 auth-social-btn" href="{% url 'google_login' %}">
+                <i class="fa-brands fa-google"></i>
+                Continue with Google
+            </a>
+
+            <p class="auth-meta">Don't have an account? <a href="{% url 'register' %}">Register</a></p>
+            <p class="auth-meta">Already registered but not verified? <a href="{% url 'verify_otp' %}">Verify OTP</a>.</p>
+        </div>
+    </div>
+</section>
 {% endblock %}

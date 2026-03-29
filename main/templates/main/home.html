@@ -1,11 +1,111 @@
 {%extends "main/base.html"%}
 {%block title%}home page{%endblock%}
 
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'main/css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/main.css' %}">
+    <style>
+        .overdue-widget {
+            margin-top: 24px;
+            background: #fff5f5;
+            border: 1px solid #f2b8b8;
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+        .overdue-widget h3 {
+            color: #9b1212;
+            margin-bottom: 8px;
+        }
+        .overdue-widget ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .overdue-widget li {
+            color: #9b1212;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+    </style>
+{% endblock %}
+
 {%block content%}
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="text" name="name" placeholder="name">
-    <button type="submit">Save</button>
-</form>
+<div class="div">
+
+<div class="home-container">
+    <h1>Welcome to the Inventory Management System</h1>
+    <p>Use the navigation menu to manage your inventory, sales, and reports.</p>
+    <div id="homeImage">
+        <div class="image1">
+            <img src="{% static 'main/images/cashbook.png' %}" alt="Inventory Management">
+        </div>
+        <div class="image2">
+            <img src="{% static 'main/images/income.png' %}" alt="Inventory Management">
+        </div>
+    </div>
+    <div class="analysis">
+        <h2>Inventory Analysis</h2>
+        <p>Analyze your inventory levels, sales trends, and performance metrics to make informed decisions for your business.</p>
+        <img src="{% static 'main/images/analysis.png' %}" alt="Inventory Analysis">
+    </div>
+    {% if request.session.customer_id %}
+    <div class="overdue-widget">
+        <h3>Overdue Debtors List</h3>
+        <ul id="homeOverdueDebtors">
+            <li>Loading overdue debtors...</li>
+        </ul>
+    </div>
+    {% endif %}
+</div>
+<div class="evident">;
+    <h2>Efficient Inventory Management Made Easy</h2>
+    <p>Our Inventory Management System helps you streamline your business operations, track inventory levels, manage sales, and generate insightful reports. With our user-friendly interface and powerful features, you can take control of your inventory and make informed decisions to grow your business.</p>
+<div class="evident1">
+    <h2>Why Choose Our Inventory Management System?</h2>
+    <ul>
+        <li><strong>Comprehensive Features:</strong> Manage inventory, sales, and reports all in one place.</li>
+        <li><strong>User-Friendly Interface:</strong> Intuitive design for easy navigation and efficient workflow.</li>
+        <li><strong>Real-Time Analytics:</strong> Gain insights into your inventory and sales performance with real-time data.</li>
+        <li><strong>Secure and Reliable:</strong> Your data is protected with robust security measures.</li>
+    </ul>
+    <img src="{% static 'main/images/Screenshot 2026-03-28 100835.png' %}" alt="Inventory Management Benefits" class="benefits-image">
+</div>
+<div class="evident2">
+    <h2>Get Started Today!</h2>
+    <p>Sign up now to experience the benefits of our Inventory Management System and take control of your business operations.</p>
+    
+    <img src="{% static 'main/images/Screenshot 2026-03-28 101005.png' %}" alt="Get Started" class="get-started-image">
+    <a href="/register" class="btn btn-primary">Sign Up</a>
+</div>
+</div>
+</div>
+{% if request.session.customer_id %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const list = document.getElementById("homeOverdueDebtors");
+        if (!list) return;
+
+        fetch("/api/overdue-debtors/")
+            .then(function (response) { return response.json(); })
+            .then(function (payload) {
+                list.innerHTML = "";
+                if (!payload || !Array.isArray(payload.items) || !payload.items.length) {
+                    list.innerHTML = "<li>No overdue debtors found.</li>";
+                    return;
+                }
+
+                payload.items.forEach(function (item) {
+                    const li = document.createElement("li");
+                    li.textContent =
+                        item.name + " - " + Number(item.total_credit || 0).toFixed(2) +
+                        " (Due: " + (item.due_date || "-") + ")";
+                    list.appendChild(li);
+                });
+            })
+            .catch(function () {
+                list.innerHTML = "<li>Unable to load overdue debtors right now.</li>";
+            });
+    });
+</script>
+{% endif %}
 {%endblock%}

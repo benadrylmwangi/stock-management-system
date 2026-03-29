@@ -1,0 +1,372 @@
+:root {
+  --nav-height: 60px;
+  --nav-offset: var(--nav-height);
+  --primary: #2563eb;
+  --secondary: #1e293b;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --bg: #eff1f3;
+  --card: #d5c6ec;
+  --text: #5211cc;
+  --muted: hsl(210, 3%, 29%);
+  --border: hwb(162 86% 10%);
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  background-color: #b14444;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+}
+
+/* Prevent horizontal swipe navigation and horizontal page drift. */
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+  
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  /* Keep all page content below fixed navbar. */
+  padding-top: var(--nav-offset);
+}
+
+.app-shell {
+  display: block;
+  width: 100%;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.page {
+  width: 100%;
+  padding: 16px;
+}
+
+/* Shared content area under the fixed navbar. */
+.main-content {
+  margin-top: 0;
+  min-height: 80vh;
+}
+
+.main-content-inner {
+  width: 100%;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+header {
+  width: 100%;
+  display: block;
+  visibility: visible;
+}
+
+.nav-shell {
+  width: 100%;
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background: var(--card);
+}
+
+.navbar {
+  background: var(--card) !important;
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  min-height: var(--nav-height);
+  display: flex !important;
+  position: relative;
+  z-index: 1031;
+}
+
+.navbar .navbar-brand {
+  font-weight: 700;
+  color: var(--secondary) !important;
+}
+
+.navbar .nav-link {
+  color: var(--secondary) !important;
+  font-weight: 500;
+}
+
+.navbar .nav-link.active,
+.navbar .nav-link:hover {
+  color: var(--primary) !important;
+}
+
+.navbar-toggler {
+  border-color: var(--border);
+}
+
+.global-search-form {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-form-shell {
+  position: relative;
+  width: min(360px, 100%);
+}
+
+.search-form-shell .form-control {
+  margin-right: 0 !important;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  z-index: 1200;
+}
+
+.search-suggestion-item {
+  width: 100%;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  padding: 10px 12px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  border-radius: 0;
+  min-height: auto;
+}
+
+.search-suggestion-item:hover,
+.search-suggestion-item.is-active {
+  background: #f1f5f9;
+  opacity: 1;
+}
+
+.search-suggestion-label {
+  font-weight: 600;
+}
+
+.search-suggestion-type {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+mark {
+  background: #fff3bf;
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+.card,
+.sale-container,
+.income-statement,
+.cashbook-header,
+.lookup-box {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+
+.section {
+  margin-bottom: 30px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-top: -6px;
+}
+
+form {
+  display: grid;
+  gap: 12px;
+}
+
+label {
+  font-weight: 700;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 1rem;
+}
+
+button,
+.btn {
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 44px;
+}
+
+button:hover,
+.btn:hover {
+  opacity: 0.92;
+}
+
+.btn-success {
+  background: var(--success);
+}
+
+.btn-danger {
+  background: var(--danger);
+}
+
+.success-msg {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.error-msg {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.total {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.profit {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.loss {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.table-container,
+.cashbook-table-wrapper {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  background: var(--card);
+  table-layout: fixed;
+}
+
+th {
+  background: var(--secondary);
+  color: #b14444;
+  text-align: left;
+}
+
+td,
+th {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+tr:hover {
+  background: hsl(200, 7%, 92%);
+}
+
+#stockTotalsTable thead th,
+#commodityTotalsTable thead th,
+#returnsTable thead th,
+#expensesTable thead th {
+  background: var(--secondary) !important;
+  color: #fff !important;
+}
+
+#lookup-result.emphasized,
+#commodity-result.emphasized {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .page {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .global-search-form {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .search-form-shell {
+    width: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    padding: 32px;
+  }
+}

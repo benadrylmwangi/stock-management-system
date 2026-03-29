@@ -1,0 +1,10 @@
+.sale-container {
+    background-color: #f2f3b8;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    margin-top: 50px;
+    width: 50%;
+    text-align: center;
+    justify-self: center;
+}

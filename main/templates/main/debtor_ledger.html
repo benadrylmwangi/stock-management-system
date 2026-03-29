@@ -1,0 +1,350 @@
+{% extends "main/base.html" %}
+{% load static %}
+{% block title %}Debtor Ledger{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ledger-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 16px 12px 28px;
+    }
+    .ledger-card {
+        background: #f3f3d3;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+        margin-bottom: 18px;
+    }
+    .ledger-controls {
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) auto;
+        gap: 10px;
+        align-items: end;
+    }
+    .ledger-controls label {
+        font-weight: 600;
+    }
+    .ledger-status {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #fff4cf;
+        color: #5f4b00;
+    }
+    .ledger-status.error {
+        background: #ffe3e3;
+        color: #8b1a1a;
+    }
+    .ledger-status.success {
+        background: #e5f6e8;
+        color: #1d6a2f;
+    }
+    .overdue-badge {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        background: #b00020;
+        color: #fff;
+    }
+    .summary-value {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    .ledger-table,
+    .payment-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fffef4;
+    }
+    .ledger-table th,
+    .ledger-table td,
+    .payment-table th,
+    .payment-table td {
+        border: 1px solid #ced1b9;
+        padding: 8px;
+        text-align: left;
+        font-size: 0.94rem;
+    }
+    .ledger-table th,
+    .payment-table th {
+        background: #ececc9;
+    }
+    .debit-value {
+        color: #a90000;
+    }
+    .credit-value {
+        color: #0f7b33;
+    }
+    .balance-value {
+        font-weight: 700;
+    }
+    .overdue-list {
+        margin: 0;
+        padding-left: 18px;
+    }
+    .overdue-list li {
+        margin-bottom: 6px;
+        color: #b00020;
+        font-weight: 600;
+    }
+    @media (max-width: 768px) {
+        .ledger-controls {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ledger-page">
+    <div class="ledger-card">
+        <h2>Debtors Ledger</h2>
+        <p class="hint">View full debtor ledger, payment history, and overdue status.</p>
+
+        <div class="ledger-controls">
+            <div>
+                <label for="debtorName">Debtor Name</label>
+                <input
+                    id="debtorName"
+                    class="form-control"
+                    list="debtorNameList"
+                    placeholder="Type or select debtor name"
+                    autocomplete="off"
+                />
+                <datalist id="debtorNameList">
+                    {% for debtor_name in debtor_names %}
+                    <option value="{{ debtor_name }}"></option>
+                    {% endfor %}
+                </datalist>
+            </div>
+            <button id="loadLedgerBtn" type="button" class="btn btn-primary">Load Ledger</button>
+        </div>
+
+        <div id="ledgerStatus" class="ledger-status">Select a debtor to load transactions.</div>
+        <div id="overdueBadge" class="overdue-badge" hidden>Overdue account</div>
+        <p style="margin-top: 12px;">Current Balance: <span id="ledgerBalance" class="summary-value">0.00</span></p>
+    </div>
+
+    <div class="ledger-card">
+        <h3>Ledger Entries</h3>
+        <table class="ledger-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Debit</th>
+                    <th>Credit</th>
+                    <th>Balance</th>
+                </tr>
+            </thead>
+            <tbody id="ledgerTableBody">
+                <tr>
+                    <td colspan="5">No transactions found</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4"><strong>Total Balance</strong></td>
+                    <td id="ledgerTotalFooter" class="balance-value">0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="ledger-card">
+        <h3>Payment History</h3>
+        <table class="payment-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Reference</th>
+                </tr>
+            </thead>
+            <tbody id="paymentTableBody">
+                <tr>
+                    <td colspan="4">No transactions found</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="ledger-card">
+        <h3>Overdue Debtors List</h3>
+        <ul id="overdueList" class="overdue-list">
+            <li>Loading overdue debtors...</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const debtorNameInput = document.getElementById("debtorName");
+        const loadLedgerBtn = document.getElementById("loadLedgerBtn");
+        const ledgerStatus = document.getElementById("ledgerStatus");
+        const overdueBadge = document.getElementById("overdueBadge");
+        const ledgerBalance = document.getElementById("ledgerBalance");
+        const ledgerTableBody = document.getElementById("ledgerTableBody");
+        const ledgerTotalFooter = document.getElementById("ledgerTotalFooter");
+        const paymentTableBody = document.getElementById("paymentTableBody");
+        const overdueList = document.getElementById("overdueList");
+
+        function formatMoney(value) {
+            return Number(value || 0).toFixed(2);
+        }
+
+        function formatDate(value) {
+            if (!value) return "-";
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return value;
+            }
+            return date.toLocaleDateString();
+        }
+
+        function setStatus(message, mode) {
+            ledgerStatus.classList.remove("error", "success");
+            if (mode === "error") ledgerStatus.classList.add("error");
+            if (mode === "success") ledgerStatus.classList.add("success");
+            ledgerStatus.textContent = message;
+        }
+
+        function renderLedgerRows(entries) {
+            ledgerTableBody.innerHTML = "";
+            if (!entries.length) {
+                ledgerTableBody.innerHTML = '<tr><td colspan="5">No transactions found</td></tr>';
+                return;
+            }
+
+            entries.forEach(function (entry) {
+                const row = document.createElement("tr");
+                row.innerHTML = [
+                    "<td>" + formatDate(entry.date) + "</td>",
+                    "<td>" + (entry.description || "-") + "</td>",
+                    '<td class="debit-value">' + formatMoney(entry.debit) + "</td>",
+                    '<td class="credit-value">' + formatMoney(entry.credit) + "</td>",
+                    '<td class="balance-value">' + formatMoney(entry.balance) + "</td>",
+                ].join("");
+                ledgerTableBody.appendChild(row);
+            });
+        }
+
+        function renderPayments(payments) {
+            paymentTableBody.innerHTML = "";
+            if (!payments.length) {
+                paymentTableBody.innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
+                return;
+            }
+
+            payments.forEach(function (payment) {
+                const row = document.createElement("tr");
+                row.innerHTML = [
+                    "<td>" + formatDate(payment.date) + "</td>",
+                    '<td class="credit-value">' + formatMoney(payment.amount_paid) + "</td>",
+                    "<td>" + (payment.method || "-").toUpperCase() + "</td>",
+                    "<td>" + (payment.reference || "-") + "</td>",
+                ].join("");
+                paymentTableBody.appendChild(row);
+            });
+        }
+
+        async function loadOverdueDebtors() {
+            try {
+                const response = await fetch("/api/overdue-debtors/");
+                const data = await response.json();
+                overdueList.innerHTML = "";
+
+                if (!response.ok || !Array.isArray(data.items) || !data.items.length) {
+                    overdueList.innerHTML = "<li>No overdue debtors found</li>";
+                    return;
+                }
+
+                data.items.forEach(function (item) {
+                    const li = document.createElement("li");
+                    li.textContent =
+                        item.name +
+                        " - " +
+                        formatMoney(item.total_credit) +
+                        " (Due: " +
+                        (item.due_date || "-") +
+                        ")";
+                    overdueList.appendChild(li);
+                });
+            } catch (error) {
+                overdueList.innerHTML = "<li>Unable to load overdue debtors right now.</li>";
+            }
+        }
+
+        async function loadDebtorLedger() {
+            const debtorName = debtorNameInput.value.trim();
+            if (!debtorName) {
+                setStatus("Enter a debtor name first.", "error");
+                return;
+            }
+
+            loadLedgerBtn.disabled = true;
+            overdueBadge.hidden = true;
+            try {
+                const [ledgerResponse, paymentResponse] = await Promise.all([
+                    fetch("/api/debtor-ledger/?name=" + encodeURIComponent(debtorName)),
+                    fetch("/api/payment-history/?name=" + encodeURIComponent(debtorName)),
+                ]);
+
+                const ledgerData = await ledgerResponse.json();
+                const paymentData = await paymentResponse.json();
+
+                if (!ledgerResponse.ok || !ledgerData.exists) {
+                    setStatus(
+                        (ledgerData && ledgerData.message) || "Customer has no debt",
+                        "error"
+                    );
+                    ledgerBalance.textContent = "0.00";
+                    ledgerTotalFooter.textContent = "0.00";
+                    renderLedgerRows([]);
+                    renderPayments([]);
+                    return;
+                }
+
+                renderLedgerRows(Array.isArray(ledgerData.entries) ? ledgerData.entries : []);
+                const totalBalance = Number(ledgerData.total_balance || 0);
+                ledgerBalance.textContent = formatMoney(totalBalance);
+                ledgerTotalFooter.textContent = formatMoney(totalBalance);
+
+                if (ledgerData.debtor && ledgerData.debtor.overdue) {
+                    overdueBadge.hidden = false;
+                    setStatus("Overdue account", "error");
+                } else if (totalBalance <= 0 || (ledgerData.debtor && ledgerData.debtor.is_cleared)) {
+                    setStatus("Debt cleared", "success");
+                } else {
+                    setStatus("Ledger loaded successfully.", "success");
+                }
+
+                if (paymentResponse.ok && paymentData.exists) {
+                    renderPayments(Array.isArray(paymentData.payments) ? paymentData.payments : []);
+                } else {
+                    renderPayments([]);
+                }
+            } catch (error) {
+                setStatus("Unable to fetch ledger data right now.", "error");
+            } finally {
+                loadLedgerBtn.disabled = false;
+            }
+        }
+
+        loadLedgerBtn.addEventListener("click", loadDebtorLedger);
+        debtorNameInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                loadDebtorLedger();
+            }
+        });
+
+        loadOverdueDebtors();
+    });
+</script>
+{% endblock %}

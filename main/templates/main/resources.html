@@ -1,0 +1,601 @@
+{% extends "main/base.html" %}
+{% block title %}Resources{% endblock %}
+{% block extra_css %}
+<style>
+    .analysis-page {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 8px 12px 20px;
+    }
+
+    .sales-board {
+        position: relative;
+        border-radius: 14px;
+        border: 1px solid #c5c8ce;
+        background: linear-gradient(180deg, #d8d9dd 0%, #d5d7dc 100%);
+        box-shadow: 0 14px 28px rgba(16, 24, 40, 0.12);
+        padding: 18px 18px 14px;
+    }
+
+    .sales-board + .sales-board {
+        margin-top: 18px;
+    }
+
+    .board-top {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        margin-bottom: 6px;
+        gap: 8px;
+    }
+
+    .board-title {
+        margin: 0;
+        font-size: clamp(1.25rem, 2.3vw, 2rem);
+        font-weight: 600;
+        color: #6b7280;
+        letter-spacing: 0.01em;
+    }
+
+    .board-title.secondary {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .board-controls {
+        justify-self: center;
+        width: min(220px, 100%);
+    }
+
+    .board-controls select {
+        width: 100%;
+        border: 1px solid #cfd3da;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #1f2937;
+        font-weight: 600;
+        padding: 10px 14px;
+        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.2);
+        appearance: none;
+        background-image:
+            linear-gradient(45deg, transparent 50%, #6b7280 50%),
+            linear-gradient(135deg, #6b7280 50%, transparent 50%);
+        background-position:
+            calc(100% - 20px) calc(1em + 4px),
+            calc(100% - 14px) calc(1em + 4px);
+        background-size: 6px 6px, 6px 6px;
+        background-repeat: no-repeat;
+    }
+
+    .board-controls select:focus {
+        outline: none;
+        border-color: #5b88d7;
+        box-shadow: 0 0 0 0.2rem rgba(91, 136, 215, 0.25);
+    }
+
+    .chart-shell {
+        position: relative;
+        height: min(62vh, 470px);
+        min-height: 300px;
+        padding: 4px 6px 0;
+    }
+
+    .chart-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(241, 243, 247, 0.75);
+        border-radius: 8px;
+        z-index: 2;
+    }
+
+    .chart-empty {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        color: #6b7280;
+        font-weight: 500;
+        text-align: center;
+        z-index: 1;
+    }
+
+    @media (max-width: 768px) {
+        .board-top {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .board-controls {
+            justify-self: start;
+        }
+
+        .chart-shell {
+            height: 55vh;
+            min-height: 280px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analysis-page" style="margin-top: 20px;overflow: hidden;">
+    <div class="sales-board">
+        <div class="board-top">
+            <h2 class="board-title" id="graphHeading">Sales vs. Month</h2>
+            <div class="board-controls">
+                <label for="analysisType" class="visually-hidden">Analysis Type</label>
+                <select id="analysisType">
+                    <option value="monthly">Monthly</option>
+                    <option value="six_months">Last 6 Months</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>
+            <div></div>
+        </div>
+
+        <div class="chart-shell">
+            <div id="loadingSpinner" class="chart-loading d-none" role="status" aria-live="polite">
+                <div class="spinner-border text-primary" aria-hidden="true"></div>
+                <span class="visually-hidden">Loading data</span>
+            </div>
+            <p id="emptyState" class="chart-empty d-none">No sales data found for this period.</p>
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+
+    <div class="sales-board">
+        <div class="board-top">
+            <h3 class="board-title secondary" id="graphHeading2">Sales, Expenses and Profit</h3>
+            <div class="board-controls">
+                <label for="analysisType2" class="visually-hidden">Analysis Type</label>
+                <select id="analysisType2">
+                    <option value="monthly">Monthly</option>
+                    <option value="six_months">Last 6 Months</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>
+            <div></div>
+        </div>
+
+        <div class="chart-shell">
+            <div id="loadingSpinner2" class="chart-loading d-none" role="status" aria-live="polite">
+                <div class="spinner-border text-primary" aria-hidden="true"></div>
+                <span class="visually-hidden">Loading data</span>
+            </div>
+            <p id="emptyState2" class="chart-empty d-none">No sales/expense data found for this period.</p>
+            <canvas id="profitChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        const chartEndpoint = "{% url 'sales_analysis_data' %}";
+        const analysisTypeSelect = document.getElementById("analysisType");
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const emptyState = document.getElementById("emptyState");
+        const graphHeading = document.getElementById("graphHeading");
+        const canvas = document.getElementById("salesChart");
+
+        let salesChart = null;
+
+        const headingByType = {
+            monthly: "Sales vs. Month",
+            six_months: "Sales (Last 6 Months)",
+            yearly: "Sales vs. Year"
+        };
+
+        const currencyFormatter = new Intl.NumberFormat("en-KE", {
+            style: "currency",
+            currency: "KES",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        function setLoading(isLoading) {
+            loadingSpinner.classList.toggle("d-none", !isLoading);
+        }
+
+        function renderChart(labels, data, analysisType) {
+            if (salesChart) {
+                salesChart.destroy();
+            }
+
+            graphHeading.textContent = headingByType[analysisType] || "Sales Analysis";
+
+            if (!labels.length) {
+                emptyState.classList.remove("d-none");
+                return;
+            }
+
+            emptyState.classList.add("d-none");
+
+            salesChart = new Chart(canvas, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Sales",
+                        data: data,
+                        backgroundColor: "#3f74c8",
+                        borderColor: "#3f74c8",
+                        borderWidth: 1,
+                        borderRadius: 3,
+                        barPercentage: 0.72,
+                        categoryPercentage: 0.86
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 540,
+                        easing: "easeOutQuart"
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: "Sales Analysis",
+                            color: "#374151",
+                            font: {
+                                size: 18,
+                                weight: "600"
+                            },
+                            padding: {
+                                top: 6,
+                                bottom: 10
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: "rgba(31, 41, 55, 0.95)",
+                            titleColor: "#f9fafb",
+                            bodyColor: "#f9fafb",
+                            borderColor: "#9ca3af",
+                            borderWidth: 1,
+                            displayColors: false,
+                            callbacks: {
+                                label: function (context) {
+                                    return "Total Sales: " + currencyFormatter.format(context.parsed.y || 0);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: "#4b5563",
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: "Sales",
+                                color: "#374151",
+                                font: {
+                                    size: 15,
+                                    weight: "600"
+                                }
+                            },
+                            ticks: {
+                                color: "#4b5563",
+                                callback: function (value) {
+                                    return currencyFormatter.format(value);
+                                }
+                            },
+                            grid: {
+                                color: "rgba(107, 114, 128, 0.34)"
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadChartData(analysisType) {
+            setLoading(true);
+            try {
+                const response = await fetch(chartEndpoint + "?type=" + encodeURIComponent(analysisType), {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch sales analysis data.");
+                }
+
+                const payload = await response.json();
+                const labels = Array.isArray(payload.labels) ? payload.labels : [];
+                const data = Array.isArray(payload.data)
+                    ? payload.data.map(function (value) { return Number(value || 0); })
+                    : [];
+
+                renderChart(labels, data, analysisType);
+            } catch (error) {
+                if (salesChart) {
+                    salesChart.destroy();
+                    salesChart = null;
+                }
+                graphHeading.textContent = "Sales Analysis";
+                emptyState.textContent = "Unable to load chart data right now.";
+                emptyState.classList.remove("d-none");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        analysisTypeSelect.addEventListener("change", function (event) {
+            loadChartData(event.target.value);
+        });
+
+        loadChartData(analysisTypeSelect.value);
+    })();
+
+    (function () {
+        const chartEndpoint2 = "{% url 'sales_expense_profit_analysis' %}";
+        const analysisTypeSelect2 = document.getElementById("analysisType2");
+        const loadingSpinner2 = document.getElementById("loadingSpinner2");
+        const emptyState2 = document.getElementById("emptyState2");
+        const graphHeading2 = document.getElementById("graphHeading2");
+        const canvas2 = document.getElementById("profitChart");
+
+        let profitChartInstance = null;
+
+        const headingByType2 = {
+            monthly: "Sales, Expenses and Profit",
+            six_months: "Sales, Expenses and Profit (Last 6 Months)",
+            yearly: "Sales, Expenses and Profit (Yearly)"
+        };
+
+        const currencyFormatter2 = new Intl.NumberFormat("en-KE", {
+            style: "currency",
+            currency: "KES",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        const stripedBackgroundPlugin = {
+            id: "stripedBackgroundPlugin",
+            beforeDraw: function (chart) {
+                const chartArea = chart.chartArea;
+                const xScale = chart.scales.x;
+                if (!chartArea || !xScale || !xScale.ticks || !xScale.ticks.length) {
+                    return;
+                }
+
+                const ctx = chart.ctx;
+                ctx.save();
+                for (let index = 0; index < xScale.ticks.length; index += 1) {
+                    const center = xScale.getPixelForTick(index);
+                    const prev = index === 0 ? chartArea.left : xScale.getPixelForTick(index - 1);
+                    const next = index === xScale.ticks.length - 1 ? chartArea.right : xScale.getPixelForTick(index + 1);
+                    const startX = index === 0 ? chartArea.left : (prev + center) / 2;
+                    const endX = index === xScale.ticks.length - 1 ? chartArea.right : (center + next) / 2;
+                    ctx.fillStyle = index % 2 === 0 ? "rgba(17, 24, 39, 0.20)" : "rgba(255, 255, 255, 0.02)";
+                    ctx.fillRect(startX, chartArea.top, endX - startX, chartArea.bottom - chartArea.top);
+                }
+                ctx.restore();
+            }
+        };
+
+        function setLoading2(isLoading) {
+            loadingSpinner2.classList.toggle("d-none", !isLoading);
+        }
+
+        function renderProfitChart(labels, sales, expenses, profit, analysisType) {
+            if (profitChartInstance) {
+                profitChartInstance.destroy();
+            }
+
+            graphHeading2.textContent = headingByType2[analysisType] || "Sales, Expenses and Profit";
+
+            if (!labels.length) {
+                emptyState2.classList.remove("d-none");
+                return;
+            }
+
+            emptyState2.classList.add("d-none");
+
+            const expenseBars = expenses.map(function (value) {
+                return -Math.abs(value);
+            });
+
+            profitChartInstance = new Chart(canvas2, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: "bar",
+                            label: "Sales",
+                            data: sales,
+                            backgroundColor: "rgba(63, 116, 200, 0.78)",
+                            borderColor: "#3f74c8",
+                            borderWidth: 1,
+                            borderRadius: 2,
+                            barPercentage: 0.72,
+                            categoryPercentage: 0.86
+                        },
+                        {
+                            type: "bar",
+                            label: "Expenses",
+                            data: expenseBars,
+                            backgroundColor: "rgba(138, 45, 65, 0.82)",
+                            borderColor: "#8a2d41",
+                            borderWidth: 1,
+                            borderRadius: 2,
+                            barPercentage: 0.72,
+                            categoryPercentage: 0.86
+                        },
+                        {
+                            type: "line",
+                            label: "Profit",
+                            data: profit,
+                            borderColor: "#111111",
+                            backgroundColor: "#111111",
+                            pointBackgroundColor: "#111111",
+                            pointBorderColor: "#111111",
+                            pointRadius: 3.2,
+                            pointHoverRadius: 4,
+                            tension: 0.34,
+                            borderWidth: 2.2
+                        }
+                    ]
+                },
+                plugins: [stripedBackgroundPlugin],
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: "index",
+                        intersect: false
+                    },
+                    animation: {
+                        duration: 680,
+                        easing: "easeOutQuart"
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: "bottom",
+                            labels: {
+                                color: "#1f2937",
+                                boxWidth: 12,
+                                boxHeight: 12,
+                                padding: 20
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: "Sales, Expenses and Profit",
+                            color: "#374151",
+                            font: {
+                                size: 18,
+                                weight: "600"
+                            },
+                            padding: {
+                                top: 6,
+                                bottom: 10
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: "rgba(31, 41, 55, 0.96)",
+                            titleColor: "#f9fafb",
+                            bodyColor: "#f9fafb",
+                            borderColor: "#9ca3af",
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label || "Amount";
+                                    const value = Number(context.raw || 0);
+                                    if (label === "Expenses") {
+                                        return label + ": -" + currencyFormatter2.format(Math.abs(value));
+                                    }
+                                    return label + ": " + currencyFormatter2.format(value);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: false,
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: "#374151",
+                                maxRotation: 0,
+                                minRotation: 0
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: "Amount",
+                                color: "#374151",
+                                font: {
+                                    size: 15,
+                                    weight: "600"
+                                }
+                            },
+                            ticks: {
+                                color: "#374151",
+                                callback: function (value) {
+                                    const amount = Number(value || 0);
+                                    if (amount < 0) {
+                                        return "-" + currencyFormatter2.format(Math.abs(amount));
+                                    }
+                                    return currencyFormatter2.format(amount);
+                                }
+                            },
+                            grid: {
+                                color: "rgba(107, 114, 128, 0.35)"
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadProfitChartData(analysisType) {
+            setLoading2(true);
+            try {
+                const response = await fetch(chartEndpoint2 + "?type=" + encodeURIComponent(analysisType), {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch sales-expense-profit data.");
+                }
+
+                const payload = await response.json();
+                const labels = Array.isArray(payload.labels) ? payload.labels : [];
+                const sales = Array.isArray(payload.sales)
+                    ? payload.sales.map(function (value) { return Number(value || 0); })
+                    : [];
+                const expenses = Array.isArray(payload.expenses)
+                    ? payload.expenses.map(function (value) { return Number(value || 0); })
+                    : [];
+                const profit = Array.isArray(payload.profit)
+                    ? payload.profit.map(function (value) { return Number(value || 0); })
+                    : [];
+
+                renderProfitChart(labels, sales, expenses, profit, analysisType);
+            } catch (error) {
+                if (profitChartInstance) {
+                    profitChartInstance.destroy();
+                    profitChartInstance = null;
+                }
+                graphHeading2.textContent = "Sales, Expenses and Profit";
+                emptyState2.textContent = "Unable to load sales-expense-profit data right now.";
+                emptyState2.classList.remove("d-none");
+            } finally {
+                setLoading2(false);
+            }
+        }
+
+        analysisTypeSelect2.addEventListener("change", function (event) {
+            loadProfitChartData(event.target.value);
+        });
+
+        loadProfitChartData(analysisTypeSelect2.value);
+    })();
+</script>
+{% endblock %}

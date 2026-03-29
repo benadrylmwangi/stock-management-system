@@ -1,0 +1,212 @@
+﻿{% extends "main/base.html" %}
+{% load search_extras %}
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<div class="container"style="margin-top: 20px;overflow: hidden;">
+    <div class="card section">
+        <h2>Global Search Results</h2>
+        {% if query %}
+            <p class="hint">Showing matches for "<strong>{{ query }}</strong>".</p>
+            <p><strong>{{ total_results }}</strong> total matches found.</p>
+        {% else %}
+            <p class="hint">Enter a search term in the navbar to find products, sales, stock, customers, and reports.</p>
+        {% endif %}
+    </div>
+
+    {% if query %}
+    <div class="card section">
+        <h3>Pages ({{ pages|length }})</h3>
+        {% if pages %}
+            <ul>
+                {% for page in pages %}
+                    <li><a href="{{ page.path }}">{{ page.title|highlight_match:query }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No page-level matches.</p>
+        {% endif %}
+    </div>
+
+    <div class="card section">
+        <h3>Products ({{ commodities|length }})</h3>
+        {% if commodities %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Buying Price</th>
+                        <th>Selling Price</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in commodities %}
+                    <tr>
+                        <td>{{ item.name|highlight_match:query }}</td>
+                        <td>{{ item.buying_price }}</td>
+                        <td>{{ item.selling_price }}</td>
+                        <td>{{ item.number_of_commodity }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p>No product matches.</p>
+        {% endif %}
+    </div>
+
+    <div class="card section">
+        <h3>Stock ({{ stocks|length }})</h3>
+        {% if stocks %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Commodity</th>
+                        <th>Quantity</th>
+                        <th>Buying Price</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in stocks %}
+                    <tr>
+                        <td>{{ item.name_commodity|highlight_match:query }}</td>
+                        <td>{{ item.number_of_commodity }}</td>
+                        <td>{{ item.buying_price }}</td>
+                        <td>{{ item.timestamp|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p>No stock matches.</p>
+        {% endif %}
+    </div>
+
+    <div class="card section">
+        <h3>Sales ({{ sales|length }})</h3>
+        {% if sales %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Customer</th>
+                        <th>Quantity</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sales %}
+                    <tr>
+                        <td>{{ item.name|highlight_match:query }}</td>
+                        <td>{{ item.buyer_name|highlight_match:query }}</td>
+                        <td>{{ item.number_of_commodity }}</td>
+                        <td>{{ item.amount }}</td>
+                        <td>{{ item.timestamp|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p>No sales matches.</p>
+        {% endif %}
+    </div>
+
+    <div class="card section">
+        <h3>Customers and Credit ({{ debtors|length }})</h3>
+        {% if debtors %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Commodity</th>
+                        <th>Outstanding Amount</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in debtors %}
+                    <tr>
+                        <td>{{ item.customer_name|default:item.name|highlight_match:query }}</td>
+                        <td>{{ item.commodity_name|highlight_match:query }}</td>
+                        <td>{{ item.total_amount }}</td>
+                        <td>{{ item.timestamp|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p>No customer/credit matches.</p>
+        {% endif %}
+    </div>
+
+    <div class="card section">
+        <h3>Expenses ({{ expenses|length }})</h3>
+        {% if expenses %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in expenses %}
+                    <tr>
+                        <td>{{ item.description|highlight_match:query }}</td>
+                        <td>{{ item.amount }}</td>
+                        <td>{{ item.timestamp|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p>No expense matches.</p>
+        {% endif %}
+    </div>
+
+    <div class="card section">
+        <h3>Returns ({{ returns|length }})</h3>
+        {% if returns %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Note</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in returns %}
+                    <tr>
+                        <td>{{ item.get_return_type_display }}</td>
+                        <td>{{ item.amount }}</td>
+                        <td>{{ item.note|default:"-"|highlight_match:query }}</td>
+                        <td>{{ item.timestamp|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p>No return matches.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

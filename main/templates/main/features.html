@@ -1,0 +1,444 @@
+{% extends "main/base.html" %}
+{% load static %}
+{% block title %}Features{% endblock %}
+
+{% block content %}
+<div class="container"style="margin-top: 2px;overflow: hidden;">
+    <div class="card section">
+        <h2>Reports & Insights</h2>
+        <p class="hint">Generate statements, review sales, and track returns in one place.</p>
+    </div>
+    <style>
+        #stockTotalsTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #stockTotalsTable th,
+        #stockTotalsTable td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        #stockTotalsTable thead th {
+            background: #f0f0f0;
+        }
+        #stockTotalsTable tbody tr:last-child td.total-amount {
+            font-weight: bold;
+            color: #0b5cad;
+        }
+        #commodityTotalsTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #commodityTotalsTable th,
+        #commodityTotalsTable td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        #commodityTotalsTable thead th {
+            background: #f0f0f0;
+        }
+        #commodityTotalsTable tbody tr:last-child td.sales-total {
+            font-weight: bold;
+            color: #0b5cad;
+        }
+        #returnsTable,
+        #expensesTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #returnsTable th,
+        #returnsTable td,
+        #expensesTable th,
+        #expensesTable td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        #returnsTable thead th,
+        #expensesTable thead th {
+            background: #f0f0f0;
+        }
+        #lookup-result.emphasized {
+            font-weight: bold;
+            color: #0b5cad;
+        }
+        #trading-summary {
+            margin-top: 20px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            background: #fafafa;
+        }
+        #trading-summary .value {
+            font-weight: bold;
+            color: #0b5cad;
+        }
+        #plResult pre {
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            background: #fff;
+            white-space: pre-wrap;
+        }
+        .pl-controls {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 10px;
+        }
+        .pl-controls label {
+            display: flex;
+            flex-direction: column;
+            font-weight: 600;
+        }
+        .income-statement {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #c8d3df;
+            border-radius: 12px;
+            background: #fbfcfe;
+        }
+        .statement-header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .statement-header h2 {
+            margin-bottom: 6px;
+        }
+        .statement-title {
+            font-weight: 600;
+            color: #2f3c49;
+        }
+        .statement-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+        .statement-controls label {
+            display: flex;
+            flex-direction: column;
+            font-weight: 600;
+        }
+        .statement-controls input {
+            padding: 6px 10px;
+            border: 1px solid #c8d3df;
+            border-radius: 8px;
+        }
+        .statement-controls .btn {
+            height: 38px;
+        }
+        .statement-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+        .statement-table td {
+            padding: 6px 10px;
+            font-size: 0.95rem;
+        }
+        .statement-label {
+            width: 60%;
+        }
+        .statement-amount {
+            width: 20%;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .indent-1 {
+            padding-left: 18px;
+        }
+        .indent-2 {
+            padding-left: 36px;
+        }
+        .statement-total {
+            border-top: 1px solid #1f2a37;
+            border-bottom: 1px solid #1f2a37;
+            font-weight: 700;
+        }
+        .statement-section {
+            font-weight: 700;
+            padding-top: 12px;
+        }
+        .statement-error {
+            color: #c0392b;
+            margin-top: 8px;
+        }
+    </style>
+
+    <div class="income-statement card section">
+        <div class="statement-header">
+            <h2 id="statementOwner">{{ request.session.customer_business_name|default:"Business" }}</h2>
+            <div id="statementTitle" class="statement-title">Income Statement for the Period Ended —</div>
+        </div>
+        <div class="statement-controls">
+            <label for="incomeStartDate">Start Date
+                <input type="date" id="incomeStartDate" name="incomeStartDate" />
+            </label>
+            <label for="incomeEndDate">End Date
+                <input type="date" id="incomeEndDate" name="incomeEndDate" />
+            </label>
+            <button type="button" id="generateIncomeBtn" class="btn btn-primary">Generate Report</button>
+            <button type="button" id="downloadIncomeBtn" class="btn btn-outline-secondary">Download</button>
+        </div>
+        <div id="incomeError" class="statement-error"></div>
+        <table class="statement-table">
+            <tbody>
+                <tr>
+                    <td class="statement-label">Sales</td>
+                    <td class="statement-amount" id="salesAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">(-) Sales Returns</td>
+                    <td class="statement-amount" id="salesReturnsAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr class="statement-total">
+                    <td class="statement-label">Net Sales</td>
+                    <td class="statement-amount"></td>
+                    <td class="statement-amount" id="netSalesAmount"></td>
+                </tr>
+
+                <tr>
+                    <td class="statement-label">Opening Inventory</td>
+                    <td class="statement-amount" id="openingInventoryAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">(+) Purchases</td>
+                    <td class="statement-amount" id="purchasesAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">(-) Return Inwards</td>
+                    <td class="statement-amount" id="returnInwardsAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr class="statement-total">
+                    <td class="statement-label">Net Purchases</td>
+                    <td class="statement-amount" id="netPurchasesAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr class="statement-total">
+                    <td class="statement-label">Cost of Goods Available for Sale</td>
+                    <td class="statement-amount" id="goodsAvailableAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">(-) Closing Inventory</td>
+                    <td class="statement-amount" id="closingInventoryAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr class="statement-total">
+                    <td class="statement-label">Cost of Sales</td>
+                    <td class="statement-amount"></td>
+                    <td class="statement-amount" id="costOfSalesAmount"></td>
+                </tr>
+
+                <tr class="statement-total">
+                    <td class="statement-label">Gross Profit</td>
+                    <td class="statement-amount"></td>
+                    <td class="statement-amount" id="grossProfitAmount"></td>
+                </tr>
+
+                <tr>
+                    <td class="statement-label statement-section">Add: Other Income</td>
+                    <td class="statement-amount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">Discount Received</td>
+                    <td class="statement-amount" id="discountReceivedAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr class="statement-total">
+                    <td class="statement-label">Total Income</td>
+                    <td class="statement-amount"></td>
+                    <td class="statement-amount" id="totalIncomeAmount"></td>
+                </tr>
+
+                <tr>
+                    <td class="statement-label statement-section">Less: Expenses</td>
+                    <td class="statement-amount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">Wages</td>
+                    <td class="statement-amount" id="wagesAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">Lighting</td>
+                    <td class="statement-amount" id="lightingAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">Rent</td>
+                    <td class="statement-amount" id="rentAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">General Expenses</td>
+                    <td class="statement-amount" id="generalAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr>
+                    <td class="statement-label indent-1">Carriage Outwards</td>
+                    <td class="statement-amount" id="carriageAmount"></td>
+                    <td class="statement-amount"></td>
+                </tr>
+                <tr class="statement-total">
+                    <td class="statement-label">Total Expenses</td>
+                    <td class="statement-amount"></td>
+                    <td class="statement-amount" id="totalExpensesAmount"></td>
+                </tr>
+                <tr class="statement-total">
+                    <td class="statement-label">Net Profit</td>
+                    <td class="statement-amount"></td>
+                    <td class="statement-amount" id="netProfitAmount"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="lookup-box card section">
+        <label for="lookup-date">Date (YYYY-MM-DD)</label>
+        <input type="date" id="lookup-date" name="lookup_date" />
+        <button type="button" id="lookup-total-btn">Get Totals</button>
+        <label for="toggle-table" style="margin-left: 10px;">
+            <input type="checkbox" id="toggle-table" />
+            Show Table
+        </label>
+        <div>
+            Expected Sales: <span id="lookup-result" class="emphasized">—</span>
+        </div>
+        <div>
+            Sales: <span id="commodity-result" class="emphasized">—</span>
+        </div>
+        <label for="toggle-commodity-table" style="margin-left: 10px;">
+            <input type="checkbox" id="toggle-commodity-table" />
+            Show Commodity Table
+        </label>
+    </div>
+
+
+    <h3 id="stockTotalsHeading" style="display: none;">Stock Totals by Date</h3>
+    <div class="table-container">
+    <table id="stockTotalsTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Commodity</th>
+                <th>Quantity</th>
+                <th>Expected Sales</th>
+                <th>Cumulative Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in stocks %}
+            <tr data-date="{{ item.timestamp|date:'Y-m-d' }}">
+                <td>{{ item.timestamp|date:"Y-m-d" }}</td>
+                <td>{{ item.name_commodity }}</td>
+                <td>{{ item.number_of_commodity }}</td>
+                <td>{{ item.expected_sales }}</td>
+                <td class="total-amount">{{ item.total_amount }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No stock records yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <h3 id="commodityTotalsHeading" style="display: none;">Sales Table</h3>
+    <div class="table-container">
+    <table id="commodityTotalsTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Commodity</th>
+                <th>Quantity</th>
+                <th>Cost of Sale</th>
+                <th>Total Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sales %}
+            <tr data-date="{{ item.timestamp|date:'Y-m-d' }}" data-amount="{{ item.amount }}" data-cost="{{ item.cost_amount }}">
+                <td>{{ item.timestamp|date:"Y-m-d" }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.number_of_commodity }}</td>
+                <td>{{ item.cost_amount }}</td>
+                <td class="sales-total">{{ item.total_amount }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No sales records yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <h3 id="returnsHeading">Returns</h3>
+    <div class="table-container">
+    <table id="returnsTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in returns %}
+            <tr data-date="{{ item.timestamp|date:'Y-m-d' }}" data-amount="{{ item.amount }}" data-type="{{ item.return_type }}">
+                <td>{{ item.timestamp|date:"Y-m-d" }}</td>
+                <td>{{ item.get_return_type_display }}</td>
+                <td>{{ item.amount }}</td>
+                <td>{{ item.note }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No return records yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <h3 id="expensesHeading">Expenses</h3>
+    <div class="table-container">
+    <table id="expensesTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in expenses %}
+            <tr data-date="{{ item.timestamp|date:'Y-m-d' }}" data-amount="{{ item.amount }}">
+                <td>{{ item.timestamp|date:"Y-m-d" }}</td>
+                <td>{{ item.description }}</td>
+                <td>{{ item.amount }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No expense records yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<script src="{% static 'main/js/income_statement.js' %}"></script>
+{% endblock %}
